@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/elysiumyun/elysium"
@@ -19,6 +20,17 @@ func main() {
 	engine := elysium.New()
 
 	engine.GET("/", whoamiHandler)
+	engine.GET("/health", func(ctx *elysium.Context) {
+		ctx.JSON(
+			http.StatusOK,
+			elysium.H{
+				"service":      "base http server",
+				"healthy":      true,
+				"timestamp":    time.Now().Format(time.ANSIC),
+				"dependencies": []elysium.H{{}},
+			},
+		)
+	})
 
 	server := &http.Server{
 		Addr:    "0.0.0.0:8080",
@@ -29,8 +41,9 @@ func main() {
 	panic(server.ListenAndServe())
 }
 
-func whoamiHandler(w http.ResponseWriter, req *http.Request) {
-	u, _ := url.Parse(req.URL.String())
+func whoamiHandler(ctx *elysium.Context) {
+	var buffer strings.Builder
+	u, _ := url.Parse(ctx.R.URL.String())
 	wait := u.Query().Get("wait")
 	if len(wait) > 0 {
 		duration, err := time.ParseDuration(wait)
@@ -40,7 +53,7 @@ func whoamiHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	hostname, _ := os.Hostname()
-	_, _ = fmt.Fprintln(w, "Hostname:", hostname)
+	buffer.WriteString(fmt.Sprintf("Hostname: %s\n", hostname))
 
 	ifaces, _ := net.Interfaces()
 	for _, i := range ifaces {
@@ -54,13 +67,14 @@ func whoamiHandler(w http.ResponseWriter, req *http.Request) {
 			case *net.IPAddr:
 				ip = v.IP
 			}
-			_, _ = fmt.Fprintln(w, "IP:", ip)
+			buffer.WriteString(fmt.Sprintf("IP: %s\n", ip))
 		}
 	}
 
-	_, _ = fmt.Fprintln(w, "RemoteAddr:", req.RemoteAddr)
-	if err := req.Write(w); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	buffer.WriteString(fmt.Sprintf("RemoteAddr: %s\n", ctx.R.RemoteAddr))
+	ctx.String(http.StatusOK, buffer.String())
+	if err := ctx.R.Write(ctx.W); err != nil {
+		http.Error(ctx.W, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
