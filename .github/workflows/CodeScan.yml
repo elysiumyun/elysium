@@ -1,0 +1,48 @@
+name: "Code Scanning - Action"
+
+on:
+  push:
+    branches: ["master"]
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+      - uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Initializes the CodeQL tools for scanning.
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: go
+      - name: build release
+        run: |
+          go mod tidy
+          go build -ldflags "-s -w" -o bin/server examples/base-http-server/main.go
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+      - uses: actions/checkout@v3
+      - name: go mod tidy
+        run: go mod tidy
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
