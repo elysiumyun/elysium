@@ -20,6 +20,7 @@ func main() {
 	engine := elysium.New()
 
 	engine.GET("/", whoamiHandler)
+
 	engine.GET("/health", func(ctx *elysium.Context) {
 		ctx.JSON(
 			http.StatusOK,
@@ -31,14 +32,19 @@ func main() {
 			},
 		)
 	})
+	engine.GET("/:username", userHandler)
 
 	server := &http.Server{
 		Addr:    "0.0.0.0:8080",
 		Handler: engine,
 	}
-	log.Printf("Server running at http://%v\n", server.Addr)
 
+	log.Printf("Server running at http://%v\n", server.Addr)
 	panic(server.ListenAndServe())
+}
+func userHandler(ctx *elysium.Context) {
+	username := ctx.Params["username"]
+	ctx.String(http.StatusOK, username+"\n\r")
 }
 
 func whoamiHandler(ctx *elysium.Context) {
