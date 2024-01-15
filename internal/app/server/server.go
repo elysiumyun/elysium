@@ -2,9 +2,11 @@ package server
 
 import (
 	"errors"
-	"log"
 	"os"
 	"strings"
+
+	"github.com/elysiumyun/elysium/internal/pkg/system/prepare"
+	"github.com/elysiumyun/elysium/pkg/logger"
 )
 
 func Usage() string {
@@ -26,6 +28,12 @@ func Flags() (bool, error) {
 }
 
 func Execute() error {
-	log.Println("Server init")
+	// service prepare
+	prepare.Environment()
+
+	// system initialize
+	prepare.Configure()
+
+	logger.Println("Server init")
 	return nil
 }

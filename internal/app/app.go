@@ -7,8 +7,11 @@ import (
 	"errors"
 	"os"
 
+	"github.com/elysiumyun/elysium/internal/pkg/config"
 	"github.com/elysiumyun/elysium/internal/pkg/usage"
 	"github.com/elysiumyun/elysium/pkg/info"
+	"github.com/elysiumyun/elysium/pkg/logger"
+	"github.com/elysiumyun/elysium/pkg/timezone"
 )
 
 type app struct {
@@ -52,6 +55,20 @@ func (app *app) Run() (int, error) {
 		return app.success, err
 	}
 
+	// config parser
+	config.Configure.Init()
+	err = config.Configure.Error
+	if err != nil {
+		panic(err)
+	}
+
+	// configure time
+	timezone.Init()
+
+	// init logger
+	logger.Init()
+
+	// app lifecycle
 	if isCapture {
 		isBreak, err = app.Flags()
 		if err != nil {
