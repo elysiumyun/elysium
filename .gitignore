@@ -1,0 +1,10 @@
+# system wide
+.DS_Store
+
+# golang project wide
+/bin
+/lib
+/vendor
+
+# debug file
+/app*
