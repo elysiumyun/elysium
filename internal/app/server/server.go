@@ -2,11 +2,17 @@ package server
 
 import (
 	"errors"
+	"net/http"
 	"os"
 	"strings"
+	"time"
 
+	"github.com/elysiumyun/elysium/internal/app/server/router"
+	"github.com/elysiumyun/elysium/internal/pkg/handlers"
 	"github.com/elysiumyun/elysium/internal/pkg/system/prepare"
 	"github.com/elysiumyun/elysium/pkg/logger"
+	"github.com/elysiumyun/elysium/pkg/utils"
+	"github.com/gin-gonic/gin"
 )
 
 func Usage() string {
@@ -34,6 +40,23 @@ func Execute() error {
 	// system initialize
 	prepare.Configure()
 
-	logger.Println("Server init")
-	return nil
+	// configure web server
+	engine := gin.New()
+	handlers.SetHandlers(engine)
+	router.SetRouter(engine, "/elysium")
+
+	var addr string = utils.Resolver()
+
+	server := &http.Server{
+		Addr:           addr,
+		Handler:        engine,
+		ReadTimeout:    time.Second * 10,
+		WriteTimeout:   time.Second * 10,
+		MaxHeaderBytes: 1 << 20,
+	}
+
+	// start web server
+	logger.Printf("Server Listening %s Success...\n", addr)
+	err := server.ListenAndServe()
+	return err
 }

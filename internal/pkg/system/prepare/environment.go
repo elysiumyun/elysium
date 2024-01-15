@@ -7,6 +7,7 @@ import (
 	"github.com/elysiumyun/elysium/pkg/info"
 	"github.com/elysiumyun/elysium/pkg/logger"
 	"github.com/elysiumyun/elysium/pkg/timezone"
+	"github.com/gin-gonic/gin"
 )
 
 type AppMode string
@@ -42,6 +43,7 @@ func appMode() {
 	}
 
 	service.MODE = mode
+	gin.SetMode(service.MODE)
 	logger.Printf("System Running Mode: %s\n", service.MODE)
 }
 
